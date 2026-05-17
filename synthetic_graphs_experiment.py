@@ -18,17 +18,17 @@ import multiprocessing
 import psutil
 psutil.Process().nice(1)# if on *ux
 
-# Import our own adaptive-confidence bounded-confidence module
 import sys
 # sys.path.append('..') #look one directory above
 
+#import our adaptive edge-weighted DW model
 import DW as DW
 
 
 class edge_weight_DW:
     #Set class parameters
-    tol = .01 #1e-6 #Diameter required for convergence critera of opinion clusters
-    Tmax = 10**9 #Bailout time for ending the simulation
+    tol = .01 #Diameter required for convergence critera of opinion clusters
+    Tmax = 10**8 #Bailout time for ending the simulation
     
     print("I've made a class!!")
     
@@ -59,13 +59,6 @@ class edge_weight_DW:
         if self.graph_type == "erdos-renyi":
             self.p = p
         
-        # if self.graph_type == "degree-regular":
-        #     self.k = k
-        #     if not os.path.exists(f"{self.foldername}/matfiles/k{self.k}"):
-        #         os.makedirs(f"{self.foldername}/matfiles/k{self.k}")
-            
-        #     if not os.path.exists(f"{self.foldername}/txtfiles/k{self.k}"):
-        #         os.makedirs(f"{self.foldername}/txtfiles/k{self.k}")
         if self.graph_type == "degree-regular":
             self.k = k
    
@@ -80,7 +73,8 @@ class edge_weight_DW:
         
         self.graph_seed_file = f"{self.graph_type}{n}/graph_seeds.csv"
         self.opinion_seed_file = f"{self.graph_type}{n}/opinion_seeds.csv"
-  
+
+ 
         if self.graph_type == "complete":
             #There is only one opinion seed for a complete graph, so we generate and save it if it doesn't exist yet
             if not os.path.exists(self.opinion_seed_file):
@@ -103,6 +97,7 @@ class edge_weight_DW:
                 graph_seed = str(random.randrange(sys.maxsize))
                 row = pd.DataFrame(columns = ['p', 'graph_seed'])
                 row.loc[0] = [self.p, graph_seed]
+                # df = df.append(row, ignore_index=True)
                 df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
                 df.to_csv(self.graph_seed_file, index=False, header=True)
             
@@ -110,13 +105,18 @@ class edge_weight_DW:
                 df = pd.DataFrame(columns = ['p', 'graph', 'opinion_seed'])
                 df.to_csv(self.opinion_seed_file, index=False, header=True)
 
+        
         elif self.graph_type == "degree-regular":
-            #There is only one opinion seed for a degree-regular graph, so we generate and save it if it doesn't exist yet
+            # only one opinion seed for a k-regular graph
             if not os.path.exists(self.opinion_seed_file):
                 df = pd.DataFrame(columns = ['k', 'opinion_seed'])
                 df.to_csv(self.opinion_seed_file, index=False, header=True)
             df = pd.read_csv(self.opinion_seed_file)
             row = df[df['k'] == self.k]
+                # random.seed(a=None) #reset random by seeding it with the current time
+                # weight_seed = str(random.randrange(sys.maxsize))
+                # df.loc[0] = [weight_seed]
+                # df.to_csv(self.opinion_seed_file, index=False, header=True)
             if len(row) == 0:
                 random.seed(a=None) #reset random by seeding it with the current time
                 opinion_seed = str(random.randrange(sys.maxsize))
@@ -125,7 +125,6 @@ class edge_weight_DW:
                 if df.empty:
                     # If df is empty, assign row to df directly
                     df = row
-                    # print(df)
                 else:
                     # Concatenate the row with df
                     df = pd.concat([df, row], ignore_index=True)
@@ -133,6 +132,20 @@ class edge_weight_DW:
                 df.to_csv(self.opinion_seed_file, index=False, header=True)
             
                 
+
+# if not os.path.exists(self.graph_seed_file):
+            #     df = pd.DataFrame(columns = ['k', 'graph_seed'])
+            #     df.to_csv(self.graph_seed_file, index=False, header=True)
+            # df = pd.read_csv(self.graph_seed_file)
+            # row = df[df['k'] == self.k]
+            # if len(row) == 0:
+            #     random.seed(a=None) #reset random by seeding it with the current time
+            #     graph_seed = str(random.randrange(sys.maxsize))
+            #     row = pd.DataFrame(columns = ['k', 'graph_seed'])
+            #     row.loc[0] = [self.k, graph_seed]
+            #     df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+            #     df.to_csv(self.graph_seed_file, index=False, header=True) 
+        
          #File where the random seeds for simulation are stored. 
         if self.graph_type == 'complete':
             self.sim_seed_file = self.foldername + '/sim_seeds.csv'
@@ -160,13 +173,13 @@ class edge_weight_DW:
     
         '''
         Runs DW experiment and saves appropriate output files
-        Takes in a dictionary params, containing "c" - the initial confidence 
+        Takes in a dictionary params, containing "c" - the confidence 
         bound, "mu" - the compromise parameter, "delta" - the edge weight 
         decrease parameter, "gamma" - the edge weight increase parameter, "z" -
         the initial edgeweight, and "opinion_set" - an integer representing 
         which opinion set to generate from the random opinion 
         seed to run the DW model on. 
-        For a complete graph, we only need these parameters.
+        For complete graphs and k-regular cycle-like graphs , we only need these parameters.
         For Erdos-Renyi graphs, the 5th parameter, "graph_number" needs to be specified,
         and it represents which randomly generated graph to consider.
         '''
@@ -189,21 +202,14 @@ class edge_weight_DW:
 
         #Make sure the appropriate save folders for this delta-gamma combo exist, and if not, create them
         sub_folder = f"/delta{delta}-gamma{gamma}"
-        if self.graph_type == 'complete':
-            if not os.path.exists(self.foldername + "/matfiles" + folder):
-                os.makedirs(self.foldername + '/matfiles' + folder)
+        if not os.path.exists(f"{self.foldername}/matfiles/k{k}{sub_folder}"):
+            print('at line 207')
+            os.makedirs(f"{self.foldername}/matfiles/k{k}{sub_folder}")
+        if not os.path.exists(f"{self.foldername}/txtfiles/k{k}"):
+            print('at line 210')
+            os.makedirs(f"{self.foldername}/txtfiles/k{k}")
+
         
-        if self.graph_type == 'erdos-renyi':
-            if not os.path.exists(f"{self.foldername}/matfiles/p{p}{sub_folder}"):
-                os.makedirs(f"{self.foldername}/matfiles/p{p}{sub_folder}")
-            
-        if self.graph_type == 'degree-regular':
-            if not os.path.exists(f"{self.foldername}/matfiles/k{k}{sub_folder}"):
-                os.makedirs(f"{self.foldername}/matfiles/k{k}{sub_folder}")
-            if not os.path.exists(f"{self.foldername}/txtfiles/k{k}"):
-                os.makedirs(f"{self.foldername}/txtfiles/k{k}")
-
-
         # Get the random graph seed if not a complete graph
         if self.graph_type == 'erdos-renyi':
             df = pd.read_csv(self.graph_seed_file)
@@ -229,6 +235,7 @@ class edge_weight_DW:
                 opinion_seed = random.randrange(sys.maxsize)
                 row = pd.DataFrame(columns = ['p', 'graph', 'opinion_seed'])
                 row.loc[0] = [self.p, graph_number, str(opinion_seed)]
+                # df = df.append(row, ignore_index=True)
                 df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
                 df.to_csv(self.opinion_seed_file, index=False, header=True)
             else:
@@ -242,17 +249,16 @@ class edge_weight_DW:
             savename = f"p{p}-graph{graph_number}"
         if self.graph_type == "degree-regular":
             savename = f"k{k}"
+            #savename = f"k{k/2}"
         savename = f"{savename}--delta{delta}-gamma{gamma}--c{c}--z{z}"
-        if self.graph_type == 'erdos-renyi':
-            txtfile = f"{self.foldername}/txtfiles/p{p}/{savename}.txt"
-        if self.graph_type == "degree-regular":
-            txtfile = f"{self.foldername}/txtfiles/k{k}/{savename}.txt"
-        else:
-            txtfile = f"{self.foldername}/txtfiles/{savename}.txt"
+        txtfile = f"{self.foldername}/txtfiles/k{k}/{savename}.txt"
+        #the full name of txtfile is {graph_type}{n}/txtfiles/p{self.p}/graph{graph_number}/p{self.p}-graph{graph_number}--delta{delta}-gamma{gamma}--c{c}--z{z}.txt
         savename = f"{savename}-mu{mu}"
         
         ## If the txtfile doesn't exist yet, create it and write the header with seed values to it
         lock.acquire()
+        # if os.path.exists(txtfile):
+        #     print("path exists!")
         if not os.path.exists(txtfile):
             print(txtfile)
             try:
@@ -272,7 +278,7 @@ class edge_weight_DW:
                 print("In exception:", e)
         lock.release()
         
-        # Functions to Make Degree Regular Graph
+        # Functions to make k-regular graph:
         def adjacent_edges(nodes, halfk): 
             n = len(nodes)
             #nodes = list(range(n))
@@ -292,7 +298,6 @@ class edge_weight_DW:
             G.add_edges(adjacent_edges(nodes,k//2))
             return G
     
-        #make graphs 
         if self.graph_type == "complete":
             G = igraph.Graph.Full(self.n)
         elif self.graph_type == 'degree-regular':
@@ -333,6 +338,7 @@ class edge_weight_DW:
         if len(row) == 0:
             random.seed(a=None) #reset random by seeding it with the current time so we don't keep generating the same sim seeds
             sim_seed = random.randrange(sys.maxsize)
+            # row = pd.DataFrame(columns = ['c', 'mu', 'delta', 'gamma', 'z', 'opinion_set', 'sim_seed']) 
             param_dict = {
                 'c': [c],
                 'mu': [mu],
@@ -351,6 +357,7 @@ class edge_weight_DW:
                 row.insert(0,'p', self.p)
             if self.graph_type == 'degree-regular':
                 row.insert(0,'k',k)
+            # df = df.append(row, ignore_index=True)
             try:
                 if df.empty:
                     # If df is empty, assign row to df directly
@@ -361,8 +368,9 @@ class edge_weight_DW:
                     df = pd.concat([df, row], ignore_index=True)
                     # print(df)
             except:
-                print(":-(")
+                print("dataframe creation failed :-(")
                             
+            #df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
             df.to_csv(self.sim_seed_file, index=False, header=True)
         else:
             sim_seed = row['sim_seed'].values[0]
@@ -378,6 +386,9 @@ class edge_weight_DW:
         ## Run the DW model using the simulation seed
         # print('Process Number ', getpid(), 'starting DW with sim_seed = ', sim_seed) #deleteline
 
+
+    
+        #Creates an instantiation of DW class and returns the dictionary outputs 
         outputs = DW.DW(G, c, mu, z, gamma, delta, random_seed = sim_seed, 
                         tol = self.tol, Tmax = self.Tmax)
 
@@ -386,7 +397,6 @@ class edge_weight_DW:
             print("\n----- mu = %f and opinion_set = %s -----" % (mu, opinion_set), file=f, flush=True)
 
             print("T = %s" % outputs['T'], file=f, flush=True)
-            # print("Min confidence = %.3f, and Max confidence = %.3f" % (min(outputs['confidence']), max(outputs['confidence'])), file=f, flush=True)
             print("Number of Clusters = %s" % outputs['n_clusters'], file=f, flush=True)
 
             print("Cluster Membership", file=f, flush=True)
@@ -422,15 +432,10 @@ class edge_weight_DW:
         save_sim['n_updates'] = outputs['n_updates']
         save_sim['local_receptiveness'] = outputs['local_receptiveness']
 
-        
-
         ## Save the simulation results to a matfile
-        if self.graph_type == "erdos-renyi":
-            matfile = f"{self.foldername}/matfiles/p{p}{sub_folder}/{savename}-op{opinion_set}.mat"
-        if self.graph_type == 'degree-regular':
-            matfile = f"{self.foldername}/matfiles/k{k}{sub_folder}/{savename}-op{opinion_set).mat"
-        else:
-            matfile = f"{self.foldername}/matfiles/{sub_folder}/{savename}-op{opinion_set}.mat"
+        folder = f"/k{k}/delta{delta}-gamma{gamma}/"
+        #folder = f"/k{k/2}/delta{delta}-gamma{gamma}/"
+        matfile = self.foldername + '/matfiles' + folder + savename + '-op' + str(opinion_set) +'.mat'
         io.savemat(matfile, save_sim)
         
         
@@ -442,35 +447,37 @@ def init(l):
 if __name__ == "__main__":
 ## EXPERIMENT PARAMETERS - CHANGE HERE
     graph_type = 'degree-regular'
-    n = 1000 # Complete graph size
+    n = 1000 #graph size
+
+    #For k-regular graphs: 
     # ks = [2,4,10,50,100,200,300] 
-    ks = [20] 
+    ks = [4] 
 
-    # #baseline
-    #gammas = [0.0] #Confidence-increase parameters
-    #deltas = [1.0] #Confidence-decrease parameters
+    #For erdos-renyi graphs:
+    p = 0.01
+    graph_numbers = list(range(0,1))
 
-    #other gamma/delta values
-    gammas = [0.1, 0.5, 0.9] #Confidence-increase parameters
-    deltas = [0.1, 0.5, 0.9] #Confidence-decrease parameters
+
+    #gamma/delta values
+    gammas = [0.1, 0.5, 0.9] #Edge weight increase parameters
+    deltas = [0.1, 0.5, 0.9] #Edge weught decrease parameters
 
     
-    zs = [0.1, 0.5, 0.9]
+    zs = [0.1, 0.5, 0.9] #Initial edge-weights
     
-    cs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] #Initial confidence bound
-    #cs = [0.1, 0.2, 0.7, 0.9] 
+    cs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] #Confidence bound 
     mus = [0.1, 0.3, 0.5] #Compromise parameter
 
-    opinion_sets = list(range(0,12)) #Which opinion sets to run
+    opinion_sets = list(range(0,20)) #Which opinion sets to run
 
 
     # #test parameters
-    # gammas = [0.3, 0.5] #Confidence-increase parameters
-    # deltas = [0.5,0.9] #Confidence-decrease parameters
+    # gammas = [0.3, 0.5] #Edge weight increase parameters
+    # deltas = [0.5,0.9] #Edge weught decrease parameters
     
-    # zs = [0.5]
+    # zs = [0.5] #initial edge weight
     
-    # cs = [0.4] #Initial confidence bound
+    # cs = [0.4] #confidence bound
     # mus = [0.5] #Compromise parameter
     
     # opinion_sets = list(range(0,1)) #Which opinion sets to run
@@ -478,7 +485,7 @@ if __name__ == "__main__":
     
     ## Generate list of tuples to feed into DW_experiments as parameters
     params_list = []
-    for graph_number in graph_numbers: 
+    for graph_number in graph_numbers:
         for k in ks:
             for delta in deltas:
                 for gamma in gammas:
@@ -489,9 +496,11 @@ if __name__ == "__main__":
                                     if graph_type == "degree-regular":
                                         matfile = (f"degree-regular{n}/matfiles/k{k}/delta{delta}-gamma{gamma}/"
                                                        f"k{k}--delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
+                                        # matfile = (f"degree-regular{n}/matfiles/k{k/2}/delta{delta}-gamma{gamma}/"
+                                        #                f"--delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
                                     elif graph_type == "erdos-renyi":
-                                        matfile = (f"erdos-renyi{n}_p{p}/matfiles/p{p}/delta{delta}-gamma{gamma}/p{p}-graph{graph_number}"
-                                               f"--delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
+                                        matfile = (f"erdos-renyi{n}/matfiles/p{p}/delta{delta}-gamma{gamma}/p{p}-"
+                                                   f"graph{graph_number}--delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
                                     else:
                                         matfile = (f"{graph_type}{n}/matfiles/delta{delta}-gamma{gamma}/"
                                                    f"delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
@@ -501,14 +510,14 @@ if __name__ == "__main__":
                                     except:
                                         param_dict = {"delta": delta, "gamma": gamma,
                                                         "c": c, "mu": mu, "z": z,
-                                                        "opinion_set": opinion_set}
+                                                        "opinion_set": opinion_set} 
                                         if graph_type == "erdos-renyi":
                                             param_dict["graph_number"] = graph_number
                                         if graph_type == "degree-regular":
                                             param_dict["k"] = k
                                         params_list.append(param_dict)  
     ## adding in baseline parameters
-    for graph_number in graph_numbers: 
+    for graph_number in graph_numbers:
         for k in ks:
             for c in cs:
                 for mu in mus:
@@ -519,9 +528,11 @@ if __name__ == "__main__":
                         if graph_type == "degree-regular":
                             matfile = (f"degree-regular{n}/matfiles/k{k}/delta{1}-gamma{0}/"
                                        f"k{k}--delta{1}-gamma{0}--c{c}--z{0.5}-mu{mu}-op{opinion_set}.mat")
+                            # matfile = (f"degree-regular{n}/matfiles/k{k/2}/delta{1}-gamma{0}/"
+                            #            f"--delta{1}-gamma{0}--c{c}--z{0.5}-mu{mu}-op{opinion_set}.mat")
                         else:
-                            matfile = (f"{graph_type}{n}/matfiles/delta{delta}-gamma{gamma}/"
-                                       f"delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
+                            matfile = (f"{graph_type}{n}/matfiles/delta{1}-gamma{0}/"
+                                        f"delta{1}-gamma{0}--c{c}--z{0.5}-mu{mu}-op{opinion_set}.mat")
                         try:
                             results = io.loadmat(matfile)
                             
@@ -537,9 +548,10 @@ if __name__ == "__main__":
     #print(params_list)                
     #Initialize experiment class
     experiment = edge_weight_DW('degree-regular', n = n, p=False)
+    #experiment.degree_regular_matrix(n,k)
     experiment.generate_seed_files()
 
     l = multiprocessing.Lock()
 
-    with multiprocessing.Pool(processes=75, initializer=init, initargs=(l,)) as pool:
+    with multiprocessing.Pool(processes=70, initializer=init, initargs=(l,)) as pool:
         pool.map(experiment.run_DW, params_list)

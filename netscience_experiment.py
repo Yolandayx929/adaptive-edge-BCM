@@ -18,16 +18,8 @@ import multiprocessing
 import psutil
 psutil.Process().nice(1)# if on *ux
 
-# Import our own adaptive-confidence bounded-confidence module
 import sys
 # sys.path.append('..') #look one directory above
-
-
-#-----------------------------------------------------------------
-#TO-DO: 1. Add code to make adj matrix into int 2. figure out how to save 3. Make function to load matrix and make into igraph. 4. Fix file names 
-#-----------------------------------------------------------------
-
-
 
 
 
@@ -37,15 +29,14 @@ import DW as DW
 class edge_weight_DW:
     #Set class parameters
     tol = .01 #1e-6 #Diameter required for convergence critera of opinion clusters
-    #Tmax = 10**6 #Bailout time for ending the simulation
     Tmax = 10**8
     
     print("I've made a class!!")
     
     #Folder names by graph type for saving outputs
-    folder_names = {'complete': 'Complete', 'erdos-renyi': 'Erdos-Renyi', 'degree-regular': 'Degree-Regular', 'netscience': 'Netscience'}
+    folder_names = {'complete': 'Complete', 'erdos-renyi': 'Erdos-Renyi', 'degree-regular': 'Degree-Regular', 'netscience':"Netscience"}
     
-    random_graph_types = ["complete", "erdos-renyi", 'netscience']
+    random_graph_types = ["complete", "erdos-renyi"]
 
     def __init__(self, graph_type, n, p=False):
         """
@@ -93,7 +84,6 @@ class edge_weight_DW:
         self.opinion_seed_file = f"{self.graph_type}/opinion_seeds.csv"
 
 
-        #Is there also only one opinion seed for a degree-regular graph?  
         if self.graph_type == "complete":
             #There is only one opinion seed for a complete graph, so we generate and save it if it doesn't exist yet
             if not os.path.exists(self.opinion_seed_file):
@@ -124,8 +114,8 @@ class edge_weight_DW:
                 df = pd.DataFrame(columns = ['p', 'graph', 'opinion_seed'])
                 df.to_csv(self.opinion_seed_file, index=False, header=True)
 
+        ##There is only graph seed for the k-regular graphs and netscience graph, so we generate and save it if it doesn't exist yet
         elif self.graph_type == "degree-regular":
-            #do we need a graph seed for a degree-regular graph? If yes, edit
             if not os.path.exists(self.opinion_seed_file):
                 df = pd.DataFrame(columns = ['opinion_seed'])
                 random.seed(a=None) #reset random by seeding it with the current time
@@ -139,7 +129,6 @@ class edge_weight_DW:
                 weight_seed = str(random.randrange(sys.maxsize))
                 df.loc[0] = [weight_seed]
                 df.to_csv(self.opinion_seed_file, index=False, header=True)
-            
         
                 
          #File where the random seeds for simulation are stored. 
@@ -151,13 +140,11 @@ class edge_weight_DW:
             #self.sim_seed_file = f"{self.foldername}/sim_seeds/k-{k}.csv"
             self.sim_seed_file = f"{self.foldername}/sim_seeds.csv"
         if self.graph_type =='netscience':
-            #self.sim_seed_file = f"{self.foldername}/sim_seeds/k-{k}.csv"
             self.sim_seed_file = f"{self.foldername}/sim_seeds.csv"
         
         
         #If sim seed file doesn't already exist, create it
         if not os.path.exists(self.sim_seed_file):
-            # df = pd.DataFrame(columns = ['c', 'mu', 'delta', 'gamma','z', 'opinion_set', 'sim_seed'])
             df = pd.DataFrame(columns=['c', 'mu', 'delta', 'gamma', 'z', 'opinion_set', 'sim_seed'], dtype=float)
             if self.graph_type == "erdos-renyi":
                 df.insert(0,'graph_number','')
@@ -203,10 +190,8 @@ class edge_weight_DW:
         #Make sure the appropriate save folders for this delta-gamma combo exist, and if not, create them
         sub_folder = f"/delta{delta}-gamma{gamma}"
         if not os.path.exists(f"{self.foldername}/matfiles{sub_folder}"):
-            print('at line 207')
             os.makedirs(f"{self.foldername}/matfiles{sub_folder}")
         if not os.path.exists(f"{self.foldername}/txtfiles"):
-            print('at line 210')
             os.makedirs(f"{self.foldername}/txtfiles")
 
 
@@ -225,8 +210,7 @@ class edge_weight_DW:
             opinion_seed = int(opinion_seed)
         elif self.graph_type == 'degree-regular': 
             opinion_seed = df['opinion_seed'].values[0]
-            opinion_seed = int(opinion_seed)
-        #LEILA: do I need to add in k here? 
+            opinion_seed = int(opinion_seed) 
         elif self.graph_type == 'erdos-renyi':
             row = df[df['p'] == self.p]
             row = row[row['graph'] == graph_number]
@@ -252,6 +236,7 @@ class edge_weight_DW:
             #savename = f"k{k/2}"
         savename = f"{savename}delta{delta}-gamma{gamma}--c{c}--z{z}"
         txtfile = f"{self.foldername}/txtfiles/{savename}.txt"
+        #the full name of txtfile is {graph_type}{n}/txtfiles/p{self.p}/graph{graph_number}/p{self.p}-graph{graph_number}--delta{delta}-gamma{gamma}--c{c}--z{z}.txt
         savename = f"{savename}-mu{mu}"
         
         ## If the txtfile doesn't exist yet, create it and write the header with seed values to it
@@ -276,8 +261,8 @@ class edge_weight_DW:
             except: 
                 print("In exception:", e)
         lock.release()
-        # Functions to Make Degree Regular Graph
-        #check if right place to put 
+        
+        # Functions to Make Degree Regular Graph 
         def adjacent_edges(nodes, halfk): 
             n = len(nodes)
             #nodes = list(range(n))
@@ -298,6 +283,7 @@ class edge_weight_DW:
             G.add_edges(adjacent_edges(nodes,k//2))
             return G
             
+        #Function to make graph from an adjacency matrix for real-world networks    
         def make_adjacency_matrix():
             A = pd.read_csv(self.adjacency_matrix_name, header=None)
             A = A.values
@@ -351,6 +337,7 @@ class edge_weight_DW:
         if len(row) == 0:
             random.seed(a=None) #reset random by seeding it with the current time so we don't keep generating the same sim seeds
             sim_seed = random.randrange(sys.maxsize)
+            # row = pd.DataFrame(columns = ['c', 'mu', 'delta', 'gamma', 'z', 'opinion_set', 'sim_seed']) 
             param_dict = {
                 'c': [c],
                 'mu': [mu],
@@ -395,6 +382,12 @@ class edge_weight_DW:
         #Time the DW simulation for this weight + opinion set combo
         start_time = time.time()
 
+        ## Run the DW model using the simulation seed
+        # print('Process Number ', getpid(), 'starting DW with sim_seed = ', sim_seed) #deleteline
+
+
+    
+        #creates an instantiation of DW class and returns the dictionary outputs
         outputs = DW.DW(G, c, mu, z, gamma, delta, random_seed = sim_seed, 
                         tol = self.tol, Tmax = self.Tmax)
 
@@ -403,7 +396,7 @@ class edge_weight_DW:
             print("\n----- mu = %f and opinion_set = %s -----" % (mu, opinion_set), file=f, flush=True)
 
             print("T = %s" % outputs['T'], file=f, flush=True)
-            # print("Min confidence = %.3f, and Max confidence = %.3f" % (min(outputs['confidence']), max(outputs['confidence'])), file=f, flush=True)
+            
             print("Number of Clusters = %s" % outputs['n_clusters'], file=f, flush=True)
 
             print("Cluster Membership", file=f, flush=True)
@@ -455,22 +448,19 @@ def init(l):
 if __name__ == "__main__":
 ## EXPERIMENT PARAMETERS - CHANGE HERE
     graph_type = 'netscience'
-    n = 379 # Complete graph size
+    n = 379 #netscience graph size
+
 
     #other gamma/delta values
-    gammas = [0.1, 0.5, 0.9] #Confidence-increase parameters
-    deltas = [0.1, 0.5, 0.9] #Confidence-decrease parameters
+    gammas = [0.1, 0.5, 0.9] #Edge-weight increase parameters
+    deltas = [0.1, 0.5, 0.9] #Edge-weight decrease parameters
 
     
-    zs = [0.1, 0.5, 0.9]
-    
-    cs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] #Initial confidence bound
+    zs = [0.1, 0.5, 0.9] #
+    cs = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9] #confidence bound
     mus = [0.1, 0.3, 0.5] #Compromise parameter
 
     opinion_sets = list(range(0,10)) #Which opinion sets to run
-
-    
-    #opinion_sets = list(range(0,20)) #Which opinion sets to run
     print("compiling parameters list")
     
     ## Generate list of tuples to feed into DW_experiments as parameters
@@ -484,28 +474,28 @@ if __name__ == "__main__":
                             if graph_type == "netscience":
                                 matfile = (f"netscience/matfiles/delta{delta}-gamma{gamma}/"
                                                f"delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
-                                # matfile = (f"degree-regular{n}/matfiles/k{k/2}/delta{delta}-gamma{gamma}/"
-                                #                f"--delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
+                            else:
+                                matfile = (f"{experiment}{n}/matfiles/delta{delta}-gamma{gamma}/"
+                                               f"delta{delta}-gamma{gamma}--c{c}--z{z}-mu{mu}-op{opinion_set}.mat")
                             try:
                                 results = io.loadmat(matfile)
                                     
                             except:
                                 param_dict = {"delta": delta, "gamma": gamma,
                                                 "c": c, "mu": mu, "z": z,
-                                                "opinion_set": opinion_set}
-                                #LEiLA: I dont need graph_number for these graphs, do I? 
+                                                "opinion_set": opinion_set} 
                                 if graph_type == "erdos-renyi":
                                     param_dict["graph_number"] = graph_number
-                                # if graph_type == "degree-regular":
-                                #     param_dict["k"] = k
-                                params_list.append(param_dict) 
-#leila: comment this shit out when have a moment 
+                                params_list.append(param_dict)  
     ## adding in baseline parameters
     for c in cs:
         for mu in mus:
             for opinion_set in opinion_sets:
                 if graph_type == "netscience":
                     matfile = (f"netscience/matfiles/delta{1}-gamma{0}/"
+                               f"delta{1}-gamma{0}--c{c}--z{0.5}-mu{mu}-op{opinion_set}.mat")
+                else:
+                    matfile = (f"{experiment}{n}/matfiles/delta{1}-gamma{0}/"
                                f"delta{1}-gamma{0}--c{c}--z{0.5}-mu{mu}-op{opinion_set}.mat")
                 try:
                     results = io.loadmat(matfile)
@@ -516,10 +506,9 @@ if __name__ == "__main__":
                                   "opinion_set": opinion_set}
                     if graph_type == "erdos-renyi":
                         param_dict["graph_number"] = graph_number
-                    # if graph_type == "degree-regular":
-                    #     param_dict["k"] = k
                     params_list.append(param_dict) 
-    
+    #print(params_list)                
+    #Initialize experiment class
     experiment = edge_weight_DW('netscience', n = n, p=False)
     experiment.generate_seed_files()
 
