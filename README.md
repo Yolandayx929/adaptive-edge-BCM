@@ -8,4 +8,17 @@ Plots for each of our experiments are contained in the folder corresponding to t
 
 Each collection of plots is contained in a subfolder that specifies either a fixed initial edge-weight parameter z (for example, z=0.1) or a fixed edge-weight increase parameter gamma. The plots in a subfolder with z = 0.1 are all run with the initial edge-weight parameter z = 0.1 and the plots in a subfolder with gamma = 0.1 are all run with the edge-weight increase parameter gamma = 0.1. 
 
+# Networks
+
+The code to make the synethtic graphs we consider in our paper is contained in `synthetic_graphs_experiment.py'. The real-world networks we consider in our paper are the Netscience graph of coauthorships of network scientists and four of the Facebook100 graphs of Facebook friendships. 
+
+The file for the Netscience graph is contained in the Netscience folder. We use an unweighted version of this network and consider only the largest connected component. We also take the largest connected component of each of the Facebook100 graphs. 
+
+The citations for the Netscience and Facebook100 graphs are below: 
+
+M. E. J. Newman, "Finding community structure in networks using the eigenvectors of matrices", *Phy. Rev. E*, 74(3),
+036104, 2006. DOI: 10.1103/PhysRevE.74.036104
+
+A. L. Traud, P. J. Mucha, and M. A. Porter, "Social structure of Facebook networks", *Physica A*, 391(16): 4165-4180, 2012. DOI: 10.1016/j.physa.2011.12.021
+
 # Code
