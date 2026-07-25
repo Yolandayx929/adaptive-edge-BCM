@@ -16,7 +16,7 @@ The file for the Netscience graph is contained in the Netscience folder. We use 
 
 The citations for the Netscience and Facebook100 graphs are below: 
 
-M. E. J. Newman, "Finding community structure in networks using the eigenvectors of matrices", *Phy. Rev. E*, 74(3),
+M. E. J. Newman, "Finding community structure in networks using the eigenvectors of matrices", *Phy. Rev. E*, 74(3):
 036104, 2006. DOI: 10.1103/PhysRevE.74.036104
 
 A. L. Traud, P. J. Mucha, and M. A. Porter, "Social structure of Facebook networks", *Physica A*, 391(16): 4165-4180, 2012. DOI: 10.1016/j.physa.2011.12.021
