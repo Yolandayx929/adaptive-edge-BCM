@@ -22,3 +22,14 @@ M. E. J. Newman, "Finding community structure in networks using the eigenvectors
 A. L. Traud, P. J. Mucha, and M. A. Porter, "Social structure of Facebook networks", *Physica A*, 391(16): 4165-4180, 2012. DOI: 10.1016/j.physa.2011.12.021
 
 # Code
+
+The package versions to implement are code are as follows:
+```
+python            3.8.10
+python-igraph     0.11.4
+numpy             1.24.4 
+pandas            2.0.3
+scipy             1.10.1
+matplotlib        3.7.5 
+seaborn           0.13.2 
+```
