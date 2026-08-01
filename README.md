@@ -10,7 +10,7 @@ Each collection of plots is contained in a subfolder that specifies either a fix
 
 # Networks
 
-The code to make the synethtic graphs we consider in our paper is contained in `synthetic_graphs_experiment.py'. The real-world networks we consider in our paper are the Netscience graph of coauthorships of network scientists and four of the Facebook100 graphs of Facebook friendships. 
+The code to make the synthetic graphs we consider in our paper is contained in `synthetic_graphs_experiment.py`. The real-world networks we consider in our paper are the Netscience graph of coauthorships of network scientists and four of the Facebook100 graphs of Facebook friendships. 
 
 The file for the Netscience graph is contained in the Netscience folder. We use an unweighted version of this network and consider only the largest connected component. We also take the largest connected component of each of the Facebook100 graphs. 
 
@@ -23,7 +23,7 @@ A. L. Traud, P. J. Mucha, and M. A. Porter, "Social structure of Facebook networ
 
 # Code
 
-The package versions to implement are code are as follows:
+The package versions to implement our code are as follows:
 ```
 python            3.8.10
 python-igraph     0.11.4
@@ -33,3 +33,15 @@ scipy             1.10.1
 matplotlib        3.7.5 
 seaborn           0.13.2 
 ```
+
+The code to run our experiments works as follows: 
+
+Our model is implemented in `EdgeWeightedDW.py`. 
+
+To run an experiment, we use `synthetic_graphs_experiment.py`, `netscience_experiment.py`, and `college_networks_experiment.py` for the synthetic graphs, Netscience network, and Facebook100 college networks respectively. The synthetic graphs we consider are complete graphs, Erdos-Renyi graphs, and degree-regular cycle-like graphs. 
+
+Once simulations have been completed, we use `Matfile_Consolidator.py` to calculate our quantities of interest and generate a `.csv` file of the results for each parameter pair $(\gamma, \delta)$. 
+
+To generate the plots presented in our paper, we use `linePlots_fixz_4plot.py` and `linePlots_fixgamma_4plot.py`, which plot the results in our `.csv` files.  `linePlots_fixz_4plot.py` and `linePlots_fixgamma_4plot.py` generate plots for either two values of $\delta$ and two values of $\gamma$, or for two values of $\delta$ and two values of $z_0$, respectively. We also include the files `linePlotsDW_fixz_9plots.py` and `linePlotsDW_fixgamma_9plots.py`,  which generate plots for three values of each parameter in the parameter pairs $(\gamma,\delta)$ or $(z_0, \delta)$. 
+
+
